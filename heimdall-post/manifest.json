@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "heimdall",
   "display_name": "Heimdall",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Heimdall från Näringslivscentralen: skriv mejl till företagen i dina prospektlistor, och håll listan uppdaterad när du skickar. En guide i webbläsaren hjälper dig igång.",
   "long_description": "Med Heimdall kan du be Claude skriva mejl till företagen i dina prospektlistor på Näringslivscentralen. Mejlen hamnar som utkast i din egen e-post – Proton, Gmail, iCloud, Outlook eller annan – och du läser och skickar själv. När du skickar uppdateras listan av sig själv, och svar och studsar syns där. Första gången öppnas en guide i webbläsaren där du loggar in och kopplar din e-post. Claude får aldrig dina lösenord eller mottagarnas adresser.",
   "author": {

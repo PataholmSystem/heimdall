@@ -111,7 +111,7 @@ async function leverera({ utkastIds }) {
     for (const u of utkast) {
       try {
         if (!u.till) throw new Error('Mottagare saknas')
-        if (!(await finns(klient, mapp, u.messageId))) await läggIUtkast(klient, mapp, await byggUtkast(u, fran))
+        if (!(await finns(klient, mapp, u.messageId))) await läggIUtkast(klient, mapp, await byggUtkast(u, u.fran || fran))
         levererade.push({ id: u.id, messageId: u.messageId })
       } catch (e) {
         misslyckade.push({ id: u.id, fel: e.message.slice(0, 300) })

@@ -23,6 +23,12 @@ describe('utkastet', () => {
     expect(rå).toMatch(/^In-Reply-To: <forsta@x>/m)
     expect(rå).toMatch(/^X-Heimdall-Utkast: U1/m)
     expect(rå).toMatch(/^To: info@hotell\.se/m)
+    expect(rå).toMatch(/^From: sara@saljaren\.se/m)
+  })
+
+  it('skickas från den adress listan valt', async () => {
+    const rå = (await byggUtkast({ id: 'U2', till: 'a@b.se', bcc: 'logg-x@in.naringslivscentralen.se', amne: 'Hej', text: 'Text', messageId: '<m@n>' }, 'marcus@geoquestr.com')).toString()
+    expect(rå).toMatch(/^From: marcus@geoquestr\.com/m)
   })
 })
 
