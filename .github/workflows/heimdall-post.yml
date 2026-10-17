@@ -1,0 +1,70 @@
+# Publicerar heimdall-post när en release med taggen heimdall-post-v<version>
+# skapas: testerna, npm med proveniens, och en .mcpb per operativsystem till
+# releasen. Paketet har en nativ modul (@napi-rs/keyring), så varje .mcpb
+# byggs på sitt eget operativsystem.
+#
+# npm: konfigurera Trusted Publishing för paketet på npmjs.com (repot
+# PataholmSystem/heimdall, workflow heimdall-post.yml). Före första
+# publiceringen går det med en NPM_TOKEN-hemlighet i stället.
+name: heimdall-post
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  test:
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.release.tag_name, 'heimdall-post-v')
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: heimdall-post } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci
+      - run: npm test
+
+  npm:
+    needs: test
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: heimdall-post } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, registry-url: 'https://registry.npmjs.org' }
+      - run: npm install -g npm@11
+      - name: Versionen stämmer med taggen
+        run: test "heimdall-post-v$(node -p "require('./package.json').version")" = "${{ github.event.release.tag_name }}"
+      - run: npm ci
+      - run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  mcpb:
+    needs: test
+    strategy:
+      matrix:
+        include:
+          - { os: macos-latest, namn: macos-arm64 }
+          - { os: macos-13, namn: macos-x64 }
+          - { os: windows-latest, namn: windows-x64 }
+          - { os: ubuntu-latest, namn: linux-x64 }
+    runs-on: ${{ matrix.os }}
+    defaults: { run: { working-directory: heimdall-post, shell: bash } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci --omit=dev
+      - run: npx -y @anthropic-ai/mcpb@2.1.2 pack . ../heimdall-post-${{ matrix.namn }}.mcpb
+      - uses: actions/upload-artifact@v4
+        with: { name: heimdall-post-${{ matrix.namn }}, path: heimdall-post-${{ matrix.namn }}.mcpb }
+      - if: github.event_name == 'release'
+        run: gh release upload "${{ github.event.release.tag_name }}" ../heimdall-post-${{ matrix.namn }}.mcpb --clobber
+        env: { GH_TOKEN: '${{ github.token }}' }

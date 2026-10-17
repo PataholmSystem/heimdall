@@ -1,0 +1,15 @@
+{
+  "name": "heimdall",
+  "owner": { "name": "Pataholm System AB", "url": "https://naringslivscentralen.se" },
+  "metadata": {
+    "description": "Heimdall från Näringslivscentralen: prospektlistor, mejlutkast och kontaktlogg i Claude."
+  },
+  "plugins": [
+    {
+      "name": "heimdall",
+      "source": "./plugin",
+      "description": "Skriv mejl till företagen i dina prospektlistor, och håll listan i fas med det du skickar.",
+      "version": "1.0.0"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "name": "heimdall",
+  "version": "1.0.0",
+  "description": "Heimdall från Näringslivscentralen: prospektlistor, mejlutkast och kontaktlogg. Skriver relevanta mejl till företagen i dina listor och lägger dem som utkast i din egen mejlkorg – du läser och skickar själv.",
+  "author": { "name": "Pataholm System AB", "url": "https://naringslivscentralen.se" },
+  "homepage": "https://naringslivscentralen.se/konto/ai",
+  "license": "MIT",
+  "keywords": ["prospektering", "crm", "mejl", "försäljning", "sverige"]
+}

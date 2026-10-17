@@ -1,0 +1,55 @@
+{
+  "name": "heimdall-post",
+  "version": "1.0.0",
+  "description": "Heimdalls hjälpare för mejlkorgen: lägger utkasten från Heimdall (Näringslivscentralen) bland dina egna utkast och synkar det du skickar. Fungerar med Proton (via Bridge), Gmail, Outlook, iCloud och annan IMAP. Skickar aldrig mejl.",
+  "type": "module",
+  "bin": {
+    "heimdall-post": "bin/heimdall-post.mjs"
+  },
+  "main": "server.mjs",
+  "files": [
+    "bin",
+    "lib",
+    "server.mjs",
+    "setup.mjs",
+    "manifest.json",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "setup": "node bin/heimdall-post.mjs setup",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "mcp",
+    "heimdall",
+    "imap",
+    "proton",
+    "prospektering"
+  ],
+  "homepage": "https://naringslivscentralen.se/konto/ai",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "@napi-rs/keyring": "2.1.1",
+    "imapflow": "2.5.2",
+    "mailparser": "3.9.40",
+    "nodemailer": "10.1.2",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "vitest": "3.2.7"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PataholmSystem/heimdall.git",
+    "directory": "heimdall-post"
+  },
+  "bugs": {
+    "url": "https://github.com/PataholmSystem/heimdall/issues"
+  },
+  "author": "Pataholm System AB"
+}
