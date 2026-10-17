@@ -35,8 +35,12 @@ Behöver du ändra något senare: be Claude *"öppna Heimdalls guide"*.
 - **Mottagarnas adresser** kommer från Heimdall till tillägget och går till din
   e-post. Claude ser dem aldrig – bara antal och företagsnamn.
 - **Synken** läser bara rubriker (avsändare, mottagare, datum, ämne). Den jämför
-  adresserna på datorn mot hashar från Heimdall och skickar bara det som rör dina
-  listor. Allt annat i korgen lämnar aldrig datorn.
+  adresserna på datorn mot hashar från Heimdall och skickar bara mejl i trådar
+  från Heimdall, eller till och från en adress i listan sedan företaget kom in i
+  den. Domänen ensam räcker aldrig. Ett mejl från adressen räknas som svar först
+  när företaget kontaktats, och aldrig från noreply@, faktura@ och liknande
+  eller när det är ett utskick till många. Allt annat i korgen – ämnesraden
+  också – lämnar aldrig datorn.
 - **Svarstexter** skickas till Claude bara om du sagt ja i guiden.
 - **Guiden** körs bara på din egen dator (127.0.0.1) och kräver en hemlig nyckel
   i adressen. Proton Bridges certifikat sparas första gången och kontrolleras

@@ -17,7 +17,8 @@ import { microsoftToken } from './microsoft.mjs'
  * Bridge godtas.
  */
 
-const RUBRIKER = ['references', 'auto-submitted', 'x-heimdall-utkast']
+// List-Id, List-Unsubscribe och Precedence: utskick till många, som aldrig är svar (match.mjs).
+const RUBRIKER = ['references', 'auto-submitted', 'x-heimdall-utkast', 'list-id', 'list-unsubscribe', 'precedence']
 
 /** Lösenordet till korgen ur nyckelringen, eller ur första versionens namn. */
 export function imapLösenord(anvandare) {
@@ -82,7 +83,12 @@ export async function mappar(klient) {
   return { utkast: hitta('\\Drafts'), skickat: hitta('\\Sent'), inkorg: 'INBOX' }
 }
 
-function meddelande(msg) {
+/**
+ * Ett meddelande ur imapflows fetch. `datum` är mejlets eget, ur Date-rubriken,
+ * eller null när det inte går att läsa – ett mejl utan datum får inte bli
+ * dagens och slinka igenom gränserna i match.mjs.
+ */
+export function meddelande(msg) {
   const e = msg.envelope ?? {}
   return {
     uid: msg.uid,
@@ -91,7 +97,10 @@ function meddelande(msg) {
     references: referenser(msg.headers),
     autoSubmitted: rubrik(msg.headers, 'auto-submitted'),
     heimdallUtkast: rubrik(msg.headers, 'x-heimdall-utkast'),
-    datum: (e.date instanceof Date && !Number.isNaN(e.date.getTime()) ? e.date : new Date()).toISOString(),
+    listId: rubrik(msg.headers, 'list-id'),
+    listUnsubscribe: rubrik(msg.headers, 'list-unsubscribe'),
+    precedence: rubrik(msg.headers, 'precedence'),
+    datum: e.date instanceof Date && !Number.isNaN(e.date.getTime()) ? e.date.toISOString() : null,
     amne: e.subject ?? '',
     from: e.from,
     to: e.to,
@@ -105,6 +114,10 @@ function meddelande(msg) {
  * antingen det, eller en funktion som får mappens UIDVALIDITY och bestämmer –
  * ett vattenmärke gäller bara så länge den inte bytts. Ger också UIDVALIDITY
  * och högsta UID, så att vattenmärket kan flyttas.
+ *
+ * SEARCH SINCE går på INTERNALDATE, när mejlet kom in i korgen, och släpper
+ * igenom gammal post som flyttats eller importerats. Mejlets eget datum prövas
+ * därför i match.mjs.
  */
 export async function läsRubriker(klient, mapp, vadFör, max = 2000) {
   const lås = await klient.getMailboxLock(mapp, { readOnly: true })

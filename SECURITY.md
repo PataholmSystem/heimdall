@@ -17,6 +17,8 @@ Vi svarar inom tre arbetsdagar.
 - **TLS** kontrolleras alltid. Proton Bridges självsignerade certifikat hämtas
   från Bridge när korgen kopplas och godtas sedan bara på sitt fingeravtryck.
 - **Det som lämnar datorn** är bara rubriker för mejl som rör användarens
-  prospektlistor – matchade lokalt mot hashar – och, om användaren slagit på
-  det, svarstexter till AI-assistenten.
+  prospektlistor – Heimdalls trådar, eller adresser i listan matchade lokalt mot
+  hashar och inte äldre än raden, aldrig på domänen – och, om användaren slagit
+  på det, svarstexter till AI-assistenten. Reglerna står i
+  `heimdall-post/lib/match.mjs`.
 - **Releaser** byggs i GitHub Actions: `Heimdall.mcpb` på releasen, och npm-paketet med proveniens.

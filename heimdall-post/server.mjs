@@ -7,8 +7,8 @@ import { startaGuide } from './lib/guide.mjs'
 import { anropa, inloggad, mcpAnrop } from './lib/heimdall.mjs'
 import { anslut, finns, läggIUtkast, läsKällor, läsRubriker, mappar, sökBcc, textUr } from './lib/imap.mjs'
 import { korgKopplad, läsInstallningar, läsLage, sparaLage } from './lib/installningar.mjs'
-import { hash, index, kastade, loggkod, skickat, studs, svar, ärStuds } from './lib/match.mjs'
-import { adresser, byggUtkast, doman, egenText, svarstext } from './lib/mejl.mjs'
+import { hash, index, kastade, loggkod, lär, skickat, studs, svar, ärStuds } from './lib/match.mjs'
+import { adresser, byggUtkast, egenText, svarstext } from './lib/mejl.mjs'
 import { öppna } from './lib/oppna.mjs'
 import { rapportera } from './lib/status.mjs'
 import { flytta, nyckel, vadSkaLäsas } from './lib/vattenmarke.mjs'
@@ -148,7 +148,10 @@ async function synka({ since }) {
       const rad = await läsRubriker(klient, m.skickat, vadFör(n))
       for (const msg of rad.meddelanden) {
         const h = skickat(msg, ix)
-        if (h) händelser.push(h)
+        if (h) {
+          händelser.push(h)
+          lär(ix, h)
+        }
         if (msg.messageId) skickade.messageIds.add(msg.messageId)
         for (const a of adresser(msg.bcc)) {
           const k = loggkod(a, ix.loggDoman)
@@ -216,18 +219,16 @@ async function läsSvar({ refs }) {
   const ix = index(data)
   const valda = new Set(refs)
   const hashar = new Map(data.adresser.filter((a) => valda.has(a.ref)).map((a) => [a.hash, a.ref]))
-  const domaner = new Map(data.domaner.filter((d) => valda.has(d.ref)).map((d) => [d.doman, d.ref]))
   const tradar = new Map(data.messageIds.filter((m) => valda.has(m.ref)).map((m) => [m.messageId, m.ref]))
   const ut = Object.fromEntries(refs.map((r) => [r, []]))
   await medKorg(async (klient) => {
     const r = await läsRubriker(klient, 'INBOX', { sedan: new Date(Date.now() - 90 * 86400_000) }, 1000)
     const träffar = []
     for (const msg of r.meddelanden) {
+      // Bara det synken räknar som svar – inte ordrar, fakturor och nyhetsbrev från samma adress.
+      if (!svar(msg, ix)) continue
       const fran = adresser(msg.from)[0] ?? ''
-      const ref =
-        [msg.inReplyTo, ...msg.references].map((id) => id && tradar.get(id)).find(Boolean) ??
-        hashar.get(hash(ix.salt, fran)) ??
-        domaner.get(doman(fran))
+      const ref = [msg.inReplyTo, ...msg.references].map((id) => id && tradar.get(id)).find(Boolean) ?? hashar.get(hash(ix.salt, fran))
       if (ref) träffar.push({ uid: msg.uid, ref, datum: msg.datum, amne: msg.amne })
     }
     const källor = await läsKällor(klient, 'INBOX', träffar.slice(-40).map((t) => t.uid))
