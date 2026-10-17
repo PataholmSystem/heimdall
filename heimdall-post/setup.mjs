@@ -1,4 +1,5 @@
 import { existsSync } from 'node:fs'
+import { homedir } from 'node:os'
 import { createInterface } from 'node:readline'
 import { stdin, stdout } from 'node:process'
 import { FORVAL } from './lib/forval.mjs'
@@ -36,6 +37,15 @@ function fråga(text, { dold = false } = {}) {
 
 const rubrik = (t) => console.log(`\n\x1b[1m${t}\x1b[0m`)
 
+/**
+ * En sökväg som den skrivs eller dras in i terminalen: utan citattecken, med
+ * mellanslagen oescapade och ~ som hemmappen.
+ */
+export function sökväg(text) {
+  const ren = text.trim().replace(/^(['"])(.*)\1$/, '$2').replace(/\\ /g, ' ')
+  return ren === '~' || ren.startsWith('~/') ? homedir() + ren.slice(1) : ren
+}
+
 async function setup(args) {
   const inst = läsInstallningar()
   const url = args.find((a) => a.startsWith('--url='))?.slice(6) ?? (args.includes('--url') ? args[args.indexOf('--url') + 1] : null)
@@ -61,8 +71,10 @@ async function setup(args) {
   imap.anvandare = await fråga(forval === 'proton' ? 'Bridges användarnamn: ' : 'Din e-postadress: ')
   imap.fran = imap.anvandare
   if (forval === 'proton') {
-    imap.bridgeCert = await fråga('Sökvägen till Bridges exporterade certifikat (cert.pem): ')
-    if (!existsSync(imap.bridgeCert)) throw new Error('Filen finns inte.')
+    console.log('Exportera certifikatet i Bridge: Inställningar → Avancerade inställningar → Exportera TLS-certifikat.')
+    console.log('Du kan dra in filen cert.pem hit i terminalen.')
+    imap.bridgeCert = sökväg(await fråga('Sökvägen till cert.pem: '))
+    if (!existsSync(imap.bridgeCert)) throw new Error(`Filen ${imap.bridgeCert} finns inte.`)
     const fran = await fråga(`Adressen du skickar från [${imap.anvandare}]: `)
     if (fran) imap.fran = fran
   }
