@@ -15,7 +15,21 @@ Repot innehåller två saker:
 | | |
 | --- | --- |
 | [`plugin/`](plugin) | Pluginen för Claude Code: kopplingen till Heimdall, hjälparen och skillen `heimdall`. |
-| [`heimdall-post/`](heimdall-post) | Hjälparen för mejlkorgen – lägger utkasten i din egen korg över IMAP och synkar det du skickar. Publiceras på npm. |
+| [`heimdall-post/`](heimdall-post) | Tillägget för Claude-appen: Heimdalls verktyg, din e-post och guiden som kopplar dem. Släpps som `Heimdall.mcpb`. |
+
+## Claude-appen (Mac och Windows) – enklast
+
+1. Ladda ner **[Heimdall.mcpb](https://github.com/PataholmSystem/heimdall/releases/latest/download/Heimdall.mcpb)**.
+2. Dubbelklicka på filen och klicka **Installera** i Claude.
+3. Följ guiden som öppnas i webbläsaren – logga in och koppla din e-post.
+
+Det är allt: tillägget ger Claude både Heimdalls verktyg och din e-post.
+
+## Claude på webben och ChatGPT
+
+Lägg till `https://naringslivscentralen.se/mcp` som anpassad anslutning
+(*Customize → Connectors → Add custom connector*). Mejlen hamnar då i Heimdalls
+utkastlåda, där du öppnar dem i ditt mejlprogram med ett klick.
 
 ## Claude Code
 
@@ -24,22 +38,9 @@ claude plugin marketplace add PataholmSystem/heimdall
 claude plugin install heimdall@heimdall
 ```
 
-Kör `/mcp`, välj **heimdall** och logga in med ditt konto på
-naringslivscentralen.se. Sedan `/heimdall:heimdall skriv mejl till …` – eller
-skriv bara *"Heimdall, skriv mejl till …"*.
-
-För mejlkorgen:
-
-```bash
-npx heimdall-post setup
-```
-
-## Claude på webben och Claude Desktop
-
-Lägg till `https://naringslivscentralen.se/mcp` under *Customize → Connectors →
-Add custom connector*, och ladda upp mappen `plugin/skills/heimdall` som skill.
-Hjälparen finns som `.mcpb` under [Releases](../../releases) – välj den för ditt
-operativsystem och dubbelklicka.
+Kör `/mcp`, välj **heimdall** och logga in. Sedan `/heimdall:heimdall skriv mejl
+till …` – eller skriv bara *"Heimdall, skriv mejl till …"*. För e-posten:
+`npx heimdall-post setup` (när paketet finns på npm).
 
 ## Vad Claude får se
 

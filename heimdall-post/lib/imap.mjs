@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import { ImapFlow } from 'imapflow'
 import { simpleParser } from 'mailparser'
 import { FORVAL } from './forval.mjs'
-import { läsHemlighet } from './hemligheter.mjs'
+import { imapNyckel, läsHemlighet } from './hemligheter.mjs'
 import { referenser, rubrik } from './mejl.mjs'
 import { microsoftToken } from './microsoft.mjs'
 
@@ -19,23 +19,29 @@ import { microsoftToken } from './microsoft.mjs'
 
 const RUBRIKER = ['references', 'auto-submitted', 'x-heimdall-utkast']
 
-export async function anslut(inst) {
+/** Lösenordet till korgen ur nyckelringen, eller ur första versionens namn. */
+export function imapLösenord(anvandare) {
+  return läsHemlighet(imapNyckel(anvandare)) ?? läsHemlighet('imap-losenord')
+}
+
+/** Ansluter till korgen. `losenord` provar ett lösenord innan det sparats. */
+export async function anslut(inst, { losenord } = {}) {
   const imap = inst.imap ?? {}
   const förval = FORVAL[imap.forval] ?? FORVAL.annan
   const host = imap.host || förval.host
   const port = imap.port || förval.port
   const secure = imap.secure ?? förval.secure
-  if (!host || !imap.anvandare) throw new Error('Mejlkorgen är inte inställd. Kör `npx heimdall-post setup`.')
+  if (!host || !imap.anvandare) throw Object.assign(new Error('Mejlkorgen är inte kopplad än.'), { code: 'EJ_INSTALLD' })
 
   const auth =
     (imap.auth ?? förval.auth) === 'microsoft'
-      ? { user: imap.anvandare, accessToken: await microsoftToken() }
-      : { user: imap.anvandare, pass: process.env.HEIMDALL_POST_IMAP_PASSWORD || läsHemlighet('imap-losenord') }
-  if (!auth.accessToken && !auth.pass) throw new Error('Lösenordet till mejlkorgen saknas. Kör `npx heimdall-post setup`.')
+      ? { user: imap.anvandare, accessToken: await microsoftToken(imap.anvandare) }
+      : { user: imap.anvandare, pass: losenord ?? imapLösenord(imap.anvandare) }
+  if (!auth.accessToken && !auth.pass) throw Object.assign(new Error('Lösenordet till mejlkorgen saknas.'), { code: 'EJ_INSTALLD' })
 
   let tls = { minVersion: 'TLSv1.2' }
   if (förval.bridge || imap.bridgeCert) {
-    if (!imap.bridgeCert) throw new Error('Bridges certifikat saknas. Exportera det ur Proton Mail Bridge och kör setup igen.')
+    if (!imap.bridgeCert) throw Object.assign(new Error('Bridges certifikat saknas.'), { code: 'EJ_INSTALLD' })
     const pem = readFileSync(imap.bridgeCert)
     const fäst = new X509Certificate(pem).fingerprint256
     tls = {
@@ -47,7 +53,18 @@ export async function anslut(inst) {
         cert.fingerprint256 === fäst ? undefined : new Error('Bridge svarade med ett annat certifikat än det som exporterades.'),
     }
   }
-  const klient = new ImapFlow({ host, port, secure, doSTARTTLS: secure ? undefined : true, auth, tls, logger: false, emitLogs: false })
+  const klient = new ImapFlow({
+    host,
+    port,
+    secure,
+    doSTARTTLS: secure ? undefined : true,
+    auth,
+    tls,
+    logger: false,
+    emitLogs: false,
+    connectionTimeout: 15_000,
+    greetingTimeout: 15_000,
+  })
   await klient.connect()
   return klient
 }

@@ -3,10 +3,17 @@ import { Entry } from '@napi-rs/keyring'
 /**
  * Lösenord och tokens i operativsystemets nyckelring: Keychain på macOS,
  * Credential Manager på Windows, Secret Service på Linux. Aldrig i filer,
- * miljövariabler eller argument – utom lösenordet från Claude Desktops
- * formulär, som Desktop själv förvarar och lämnar som miljövariabel.
+ * miljövariabler eller argument.
+ *
+ * Namnen bär vad de gäller – Heimdalls token per adress, mejllösenordet per
+ * konto – så att en provinstallation mot en annan Heimdall aldrig skriver
+ * över den riktiga.
  */
 const TJANST = 'heimdall-post'
+
+export const heimdallNyckel = (issuer) => `heimdall-token@${new URL(issuer).host}`
+export const imapNyckel = (anvandare) => `imap-losenord:${String(anvandare).toLowerCase()}`
+export const microsoftNyckel = (anvandare) => `microsoft-token:${String(anvandare).toLowerCase()}`
 
 export function läsHemlighet(namn) {
   try {

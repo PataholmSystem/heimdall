@@ -1,0 +1,5 @@
+test/
+vitest.config.mjs
+*.mcpb
+.DS_Store
+.rok.mjs

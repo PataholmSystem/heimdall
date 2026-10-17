@@ -3,11 +3,6 @@
     "heimdall": {
       "type": "http",
       "url": "https://naringslivscentralen.se/mcp"
-    },
-    "heimdall-post": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "heimdall-post@1"]
     }
   }
 }

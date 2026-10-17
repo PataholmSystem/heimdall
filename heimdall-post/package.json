@@ -1,7 +1,7 @@
 {
   "name": "heimdall-post",
-  "version": "1.0.0",
-  "description": "Heimdalls hjälpare för mejlkorgen: lägger utkasten från Heimdall (Näringslivscentralen) bland dina egna utkast och synkar det du skickar. Fungerar med Proton (via Bridge), Gmail, Outlook, iCloud och annan IMAP. Skickar aldrig mejl.",
+  "version": "2.0.0",
+  "description": "Heimdall för Claude: skriv mejl till företagen i dina prospektlistor på Näringslivscentralen och håll listan uppdaterad. En guide i webbläsaren kopplar din e-post – Proton, Gmail, iCloud, Outlook eller annan. Skickar aldrig mejl.",
   "type": "module",
   "bin": {
     "heimdall-post": "bin/heimdall-post.mjs"
@@ -13,6 +13,7 @@
     "server.mjs",
     "setup.mjs",
     "manifest.json",
+    "icon.png",
     "README.md"
   ],
   "engines": {

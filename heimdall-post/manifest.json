@@ -1,10 +1,10 @@
 {
   "manifest_version": "0.3",
-  "name": "heimdall-post",
-  "display_name": "Heimdall – mejlkorgen",
-  "version": "1.0.0",
-  "description": "Lägger Heimdalls mejlutkast bland dina egna utkast och synkar det du skickar tillbaka till prospektlistan. Skickar aldrig mejl.",
-  "long_description": "Heimdall (Näringslivscentralen) skriver mejlutkast till företagen i dina prospektlistor. heimdall-post lägger dem bland utkasten i din egen mejlkorg – Proton via Bridge, Gmail, Outlook, iCloud eller annan IMAP – och läser rubrikerna i Skickat och Inkorg så att listan vet vad som skickats, besvarats och studsat. Mottagarnas adresser visas aldrig för AI-modellen. Första gången ber den dig godkänna en kod på naringslivscentralen.se/koppla.",
+  "name": "heimdall",
+  "display_name": "Heimdall",
+  "version": "2.0.0",
+  "description": "Heimdall från Näringslivscentralen: skriv mejl till företagen i dina prospektlistor, och håll listan uppdaterad när du skickar. En guide i webbläsaren hjälper dig igång.",
+  "long_description": "Med Heimdall kan du be Claude skriva mejl till företagen i dina prospektlistor på Näringslivscentralen. Mejlen hamnar som utkast i din egen e-post – Proton, Gmail, iCloud, Outlook eller annan – och du läser och skickar själv. När du skickar uppdateras listan av sig själv, och svar och studsar syns där. Första gången öppnas en guide i webbläsaren där du loggar in och kopplar din e-post. Claude får aldrig dina lösenord eller mottagarnas adresser.",
   "author": {
     "name": "Pataholm System AB",
     "url": "https://naringslivscentralen.se"
@@ -25,29 +25,25 @@
       "command": "node",
       "args": [
         "${__dirname}/server.mjs"
-      ],
-      "env": {
-        "HEIMDALL_POST_FORVAL": "${user_config.forval}",
-        "HEIMDALL_POST_IMAP_HOST": "${user_config.imap_host}",
-        "HEIMDALL_POST_IMAP_USER": "${user_config.imap_user}",
-        "HEIMDALL_POST_IMAP_PASSWORD": "${user_config.imap_password}",
-        "HEIMDALL_POST_BRIDGE_CERT": "${user_config.bridge_cert}",
-        "HEIMDALL_POST_LAS_SVAR": "${user_config.las_svar}"
-      }
+      ]
     }
   },
   "tools": [
     {
-      "name": "mail_check",
-      "description": "Kontrollerar mejlkorgen och inloggningen."
+      "name": "heimdall_setup",
+      "description": "Öppnar guiden för att logga in och koppla e-posten."
     },
     {
       "name": "deliver_drafts",
-      "description": "Lägger Heimdalls utkast bland utkasten i mejlkorgen."
+      "description": "Lägger utkasten bland dina utkast."
     },
     {
       "name": "sync_mailbox",
-      "description": "Synkar skickat, svar och studsar till Heimdall."
+      "description": "Synkar det du skickat och fått svar på."
+    },
+    {
+      "name": "mail_check",
+      "description": "Kontrollerar kopplingen."
     },
     {
       "name": "read_replies",
@@ -58,48 +54,6 @@
       "description": "Dina egna mejl, för tonen."
     }
   ],
-  "user_config": {
-    "forval": {
-      "type": "string",
-      "title": "Mejltjänst",
-      "description": "proton, gmail, microsoft, icloud, fastmail, loopia, onecom, binero eller annan",
-      "default": "gmail",
-      "required": true
-    },
-    "imap_user": {
-      "type": "string",
-      "title": "E-postadress (Bridges användarnamn för Proton)",
-      "required": true,
-      "description": "Adressen du skickar från. För Proton: Bridges användarnamn."
-    },
-    "imap_password": {
-      "type": "string",
-      "title": "Applösenord (Bridges lösenord för Proton)",
-      "description": "Sparas av Claude Desktop i datorns nyckelring. Lämna tomt för Microsoft.",
-      "sensitive": true,
-      "required": false
-    },
-    "imap_host": {
-      "type": "string",
-      "title": "IMAP-server (bara för Annan)",
-      "required": false,
-      "default": "",
-      "description": "Bara när mejltjänsten är \"annan\": IMAP-servern, t.ex. imap.example.se."
-    },
-    "bridge_cert": {
-      "type": "file",
-      "title": "Bridges certifikat (bara för Proton)",
-      "required": false,
-      "description": "Bara för Proton: certifikatet exporterat ur Proton Mail Bridge (Inställningar → Avancerat)."
-    },
-    "las_svar": {
-      "type": "boolean",
-      "title": "Låt AI-assistenten läsa svaren",
-      "description": "Svaren är skrivna av andra och skickas då till AI-tjänsten.",
-      "default": false,
-      "required": false
-    }
-  },
   "compatibility": {
     "platforms": [
       "darwin",
@@ -109,5 +63,7 @@
     "runtimes": {
       "node": ">=22.0.0"
     }
-  }
+  },
+  "icon": "icon.png",
+  "tools_generated": true
 }

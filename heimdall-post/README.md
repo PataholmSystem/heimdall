@@ -1,64 +1,54 @@
-# heimdall-post
+# Heimdall för Claude
 
-Hjälparen som kopplar **Heimdall** – prospektverktyget på
-[Näringslivscentralen](https://naringslivscentralen.se) – till din egen mejlkorg.
+Tillägget som kopplar **Heimdall** – prospektverktyget på
+[Näringslivscentralen](https://naringslivscentralen.se) – till Claude och till din
+egen e-post.
 
-När din AI-assistent (Claude, ChatGPT …) skrivit mejl till företagen i en
-prospektlista sparas de som utkast i Heimdall. heimdall-post lägger dem bland
-utkasten i din mejlkorg, och läser rubrikerna i Skickat och Inkorg så att listan
-vet vad som skickats, besvarats och studsat.
+Be Claude om till exempel *"skriv mejl till 10 företag i Hemsidor-listan som inte
+kontaktats"*. Claude väljer företagen, läser underlaget och skriver ett mejl per
+företag. Mejlen hamnar som utkast bland dina vanliga utkast – du läser och
+skickar själv – och listan uppdateras när du skickar.
 
-**Den skickar aldrig mejl.** Det finns ingen väg till SMTP i koden – du läser och
-skickar själv.
-
-## Fungerar med
-
-| Mejl | Inloggning |
-| --- | --- |
-| Proton Mail | Via Proton Mail Bridge (betalt Proton-konto). Bridges användarnamn och lösenord, och Bridges exporterade certifikat. |
-| Gmail / Google Workspace | Applösenord (kräver tvåstegsverifiering). |
-| Outlook / Microsoft 365 | Kod i webbläsaren. |
-| iCloud | Appspecifikt lösenord. |
-| Fastmail, Loopia, One.com, Binero, annan IMAP | Lösenord eller applösenord. |
+**Tillägget skickar aldrig mejl.** Det finns ingen väg till SMTP i koden.
 
 ## Installera
 
-```bash
-npx heimdall-post setup
-```
+1. Ladda ner **Heimdall.mcpb** från naringslivscentralen.se/konto/ai (eller
+   [senaste releasen](https://github.com/PataholmSystem/heimdall/releases/latest)).
+2. Dubbelklicka på filen. Claude-appen öppnas – klicka **Installera**.
+3. En guide öppnas i webbläsaren: logga in med ditt konto på Näringslivscentralen,
+   skriv din e-postadress och följ två–tre steg för just din e-post.
 
-Välj din mejltjänst, ange adress och applösenord, och godkänn koden som visas
-på naringslivscentralen.se/koppla. Klart på fem minuter.
+Guiden känner själv igen om du har Proton Mail (via Bridge), Gmail, iCloud,
+Outlook, Loopia, One.com, Binero eller annan e-post. Vill du inte koppla e-posten
+hamnar mejlen i Heimdalls utkastlåda, där du öppnar dem i ditt mejlprogram med
+ett klick.
 
-- **Claude Code:** pluginen `heimdall` startar hjälparen åt dig.
-- **Claude Desktop:** installera `heimdall-post.mcpb` (dubbelklicka) och fyll i formuläret.
-  Första gången ber hjälparen dig godkänna en kod.
-
-```bash
-npx heimdall-post status   # vad som är inställt
-npx heimdall-post logout   # tar bort lösenordet och inloggningen
-```
+Behöver du ändra något senare: be Claude *"öppna Heimdalls guide"*.
 
 ## Vad som händer med uppgifterna
 
-- **Lösenordet** ligger i datorns nyckelring (Keychain, Credential Manager,
-  Secret Service). Aldrig i filer.
-- **Mottagarnas adresser** kommer från Heimdall till hjälparen och går till din
-  mejlkorg. AI-modellen ser dem aldrig – bara antal och företagsnamn.
-- **Synken** läser bara rubriker (avsändare, mottagare, datum, ämne, Message-ID).
-  Den jämför adresserna lokalt mot hashar från Heimdall, och skickar bara det som
-  rör dina listor. Allt annat i korgen lämnar aldrig datorn.
-- **Svarstexter** skickas till AI-assistenten bara om du sagt ja i setup.
-- **TLS** kontrolleras alltid. Bridges självsignerade certifikat fästs – bara
-  den Bridge du exporterade certifikatet från godtas.
+- **Lösenordet** till e-posten ligger i datorns nyckelring (Keychain, Credential
+  Manager, Secret Service). Aldrig i filer.
+- **Inloggningen mot Heimdall** sker på naringslivscentralen.se, och kan tas bort
+  under Mitt konto → AI-assistenten.
+- **Mottagarnas adresser** kommer från Heimdall till tillägget och går till din
+  e-post. Claude ser dem aldrig – bara antal och företagsnamn.
+- **Synken** läser bara rubriker (avsändare, mottagare, datum, ämne). Den jämför
+  adresserna på datorn mot hashar från Heimdall och skickar bara det som rör dina
+  listor. Allt annat i korgen lämnar aldrig datorn.
+- **Svarstexter** skickas till Claude bara om du sagt ja i guiden.
+- **Guiden** körs bara på din egen dator (127.0.0.1) och kräver en hemlig nyckel
+  i adressen. Proton Bridges certifikat sparas första gången och kontrolleras
+  sedan vid varje anslutning.
 
-## Felsökning
+## För utvecklare
 
-- *"Mejlkorgen är inte inställd"* – kör `npx heimdall-post setup`.
-- *Gmail: "Invalid credentials"* – använd ett applösenord, inte ditt vanliga.
-- *Proton: anslutningen nekas* – starta Bridge, och exportera certifikatet igen om Bridge installerats om.
-- *Outlook: "administratören måste godkänna"* – be IT godkänna appen Heimdall, eller använd Bcc-loggningen.
-- *Inloggningen mot Heimdall har gått ut* – kör setup igen.
+```bash
+npx heimdall-post setup    # samma guide, från en terminal
+npx heimdall-post status
+npx heimdall-post logout
+```
 
-Inställningarna ligger i `~/.config/heimdall-post/` (macOS och Linux) eller
-`%APPDATA%\heimdall-post` (Windows).
+`HEIMDALL_URL=http://localhost:3400` pekar ut en utvecklingsserver; den får egna
+inloggningar i nyckelringen. Testerna: `npm test`.

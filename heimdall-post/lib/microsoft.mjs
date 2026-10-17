@@ -1,4 +1,4 @@
-import { läsJson, sparaJson } from './hemligheter.mjs'
+import { läsJson, microsoftNyckel, sparaJson } from './hemligheter.mjs'
 
 /**
  * Inloggningen mot Outlook och Microsoft 365. Microsoft har stängt av lösenord
@@ -11,7 +11,6 @@ import { läsJson, sparaJson } from './hemligheter.mjs'
  */
 const SCOPE = 'https://outlook.office.com/IMAP.AccessAsUser.All offline_access'
 const BAS = 'https://login.microsoftonline.com/common/oauth2/v2.0'
-const NYCKEL = 'microsoft-token'
 
 export function klientId() {
   return process.env.HEIMDALL_POST_MS_CLIENT_ID || ''
@@ -19,9 +18,9 @@ export function klientId() {
 
 const formulär = (data) => new URLSearchParams(data).toString()
 
-export async function påbörjaMicrosoft() {
+export async function påbörjaMicrosoft(anvandare) {
   if (!klientId()) {
-    throw new Error('Microsoft-inloggningen är inte inställd än (HEIMDALL_POST_MS_CLIENT_ID saknas). Använd ett annat förval tills vidare.')
+    throw new Error('Microsoft-inloggningen är inte inställd än (HEIMDALL_POST_MS_CLIENT_ID saknas). Tills dess fungerar Heimdalls utkastlåda.')
   }
   const svar = await fetch(`${BAS}/devicecode`, {
     method: 'POST',
@@ -46,7 +45,7 @@ export async function påbörjaMicrosoft() {
         const r = await t.json()
         if (t.ok) {
           const token = { access_token: r.access_token, refresh_token: r.refresh_token, expires_at: Date.now() + r.expires_in * 1000 }
-          sparaJson(NYCKEL, token)
+          sparaJson(microsoftNyckel(anvandare), token)
           return token
         }
         if (r.error === 'authorization_pending') continue
@@ -62,9 +61,9 @@ export async function påbörjaMicrosoft() {
 }
 
 /** En giltig token för IMAP, förnyad när den är på väg att gå ut. */
-export async function microsoftToken() {
-  const token = läsJson(NYCKEL)
-  if (!token) throw new Error('Inte inloggad mot Microsoft. Kör `npx heimdall-post setup`.')
+export async function microsoftToken(anvandare) {
+  const token = läsJson(microsoftNyckel(anvandare))
+  if (!token) throw new Error('Inte inloggad mot Microsoft. Öppna guiden och logga in igen.')
   if (token.expires_at > Date.now() + 120_000) return token.access_token
   const svar = await fetch(`${BAS}/token`, {
     method: 'POST',
@@ -72,7 +71,7 @@ export async function microsoftToken() {
     body: formulär({ grant_type: 'refresh_token', refresh_token: token.refresh_token, client_id: klientId(), scope: SCOPE }),
   })
   const r = await svar.json()
-  if (!svar.ok) throw new Error('Microsoft-inloggningen har gått ut. Kör `npx heimdall-post setup` igen.')
-  sparaJson(NYCKEL, { access_token: r.access_token, refresh_token: r.refresh_token ?? token.refresh_token, expires_at: Date.now() + r.expires_in * 1000 })
+  if (!svar.ok) throw new Error('Microsoft-inloggningen har gått ut. Öppna guiden och logga in igen.')
+  sparaJson(microsoftNyckel(anvandare), { access_token: r.access_token, refresh_token: r.refresh_token ?? token.refresh_token, expires_at: Date.now() + r.expires_in * 1000 })
   return r.access_token
 }

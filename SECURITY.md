@@ -9,11 +9,14 @@ Vi svarar inom tre arbetsdagar.
   (IMAP APPEND) och läser rubriker.
 - **Lösenord** ligger i operativsystemets nyckelring, aldrig i filer, argument
   eller loggar. I Claude Desktop förvarar Desktop lösenordet från formuläret.
-- **Inloggningen mot Heimdall** är OAuth:s enhetsflöde. Token gäller bara
-  `/api/post` och kan dras in under naringslivscentralen.se/konto/ai.
-- **TLS** kontrolleras alltid. Proton Bridges självsignerade certifikat fästs
-  på sitt fingeravtryck.
+- **Inloggningen mot Heimdall** sker på naringslivscentralen.se (OAuth med PKCE,
+  svaret till en port på den egna datorn). Token gäller Heimdalls MCP-server och
+  `/api/post`, och kan dras in under naringslivscentralen.se/konto/ai.
+- **Guiden** lyssnar bara på 127.0.0.1, kräver en hemlig nyckel per start,
+  prövar värdnamnet mot DNS-rebinding och får inte ramas in.
+- **TLS** kontrolleras alltid. Proton Bridges självsignerade certifikat hämtas
+  från Bridge när korgen kopplas och godtas sedan bara på sitt fingeravtryck.
 - **Det som lämnar datorn** är bara rubriker för mejl som rör användarens
   prospektlistor – matchade lokalt mot hashar – och, om användaren slagit på
   det, svarstexter till AI-assistenten.
-- **Releaser** byggs i GitHub Actions och publiceras på npm med proveniens.
+- **Releaser** byggs i GitHub Actions: `Heimdall.mcpb` på releasen, och npm-paketet med proveniens.

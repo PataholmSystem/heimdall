@@ -1,11 +1,9 @@
-# Publicerar heimdall-post när en release med taggen heimdall-post-v<version>
-# skapas: testerna, npm med proveniens, och en .mcpb per operativsystem till
-# releasen. Paketet har en nativ modul (@napi-rs/keyring), så varje .mcpb
-# byggs på sitt eget operativsystem.
+# Släpper Heimdall för Claude när en release med taggen heimdall-post-v<version>
+# skapas: testerna, Heimdall.mcpb till releasen – det användarna laddar ner
+# från naringslivscentralen.se – och npm-paketet när en NPM_TOKEN finns.
 #
-# npm: konfigurera Trusted Publishing för paketet på npmjs.com (repot
-# PataholmSystem/heimdall, workflow heimdall-post.yml). Före första
-# publiceringen går det med en NPM_TOKEN-hemlighet i stället.
+# Tillägget är ett enda paket för alla datorer: nyckelringsmodulen är nativ,
+# och alla plattformars varianter läggs i samma paket.
 name: heimdall-post
 
 on:
@@ -29,42 +27,45 @@ jobs:
       - run: npm ci
       - run: npm test
 
+  mcpb:
+    needs: test
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: heimdall-post } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - if: github.event_name == 'release'
+        name: Versionen stämmer med taggen
+        run: test "heimdall-post-v$(node -p "require('./manifest.json').version")" = "${{ github.event.release.tag_name }}"
+      - run: npm ci --omit=dev
+      - name: Nyckelringen för alla datorer
+        run: >-
+          npm install --no-save --omit=dev --force --no-audit --no-fund
+          @napi-rs/keyring-darwin-arm64@2.1.1 @napi-rs/keyring-darwin-x64@2.1.1
+          @napi-rs/keyring-win32-x64-msvc@2.1.1 @napi-rs/keyring-win32-arm64-msvc@2.1.1
+          @napi-rs/keyring-linux-x64-gnu@2.1.1 @napi-rs/keyring-linux-arm64-gnu@2.1.1
+      - run: npx -y @anthropic-ai/mcpb@2.1.2 pack . ../Heimdall.mcpb
+      - uses: actions/upload-artifact@v4
+        with: { name: Heimdall, path: Heimdall.mcpb }
+      - if: github.event_name == 'release'
+        run: gh release upload "${{ github.event.release.tag_name }}" ../Heimdall.mcpb --clobber
+        env: { GH_TOKEN: '${{ github.token }}' }
+
   npm:
     needs: test
     if: github.event_name == 'release'
     runs-on: ubuntu-latest
+    env: { NPM_TOKEN: '${{ secrets.NPM_TOKEN }}' }
     defaults: { run: { working-directory: heimdall-post } }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22, registry-url: 'https://registry.npmjs.org' }
       - run: npm install -g npm@11
-      - name: Versionen stämmer med taggen
-        run: test "heimdall-post-v$(node -p "require('./package.json').version")" = "${{ github.event.release.tag_name }}"
       - run: npm ci
-      - run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-  mcpb:
-    needs: test
-    strategy:
-      matrix:
-        include:
-          - { os: macos-latest, namn: macos-arm64 }
-          - { os: macos-13, namn: macos-x64 }
-          - { os: windows-latest, namn: windows-x64 }
-          - { os: ubuntu-latest, namn: linux-x64 }
-    runs-on: ${{ matrix.os }}
-    defaults: { run: { working-directory: heimdall-post, shell: bash } }
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 22 }
-      - run: npm ci --omit=dev
-      - run: npx -y @anthropic-ai/mcpb@2.1.2 pack . ../heimdall-post-${{ matrix.namn }}.mcpb
-      - uses: actions/upload-artifact@v4
-        with: { name: heimdall-post-${{ matrix.namn }}, path: heimdall-post-${{ matrix.namn }}.mcpb }
-      - if: github.event_name == 'release'
-        run: gh release upload "${{ github.event.release.tag_name }}" ../heimdall-post-${{ matrix.namn }}.mcpb --clobber
-        env: { GH_TOKEN: '${{ github.token }}' }
+      - if: env.NPM_TOKEN != ''
+        run: npm publish --provenance --access public
+        env: { NODE_AUTH_TOKEN: '${{ secrets.NPM_TOKEN }}' }
+      - if: env.NPM_TOKEN == ''
+        run: echo "::notice::Ingen NPM_TOKEN – npm-paketet publicerades inte. Heimdall.mcpb finns på releasen ändå."

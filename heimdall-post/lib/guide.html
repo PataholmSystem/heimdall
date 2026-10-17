@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="guide" content="__NYCKEL__">
+<title>Koppla Heimdall till Claude</title>
+<style>
+  :root {
+    --paper: #f5f5f5; --card: #fff; --line: #e7e7e7; --line-strong: #bbb;
+    --ink: #333; --soft: #575757; --muted: #7a7a7a;
+    --brand: #3069a1; --brand-deep: #1c5288; --brand-soft: #e7eff7; --marke: #223161;
+    --gul: #ffd93e; --gul-soft: #fff7d9; --gul-deep: #6e5300;
+    --ok: #44835d; --ok-soft: #e8f3ec; --err: #b02a2a; --err-soft: #fbeaea;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--paper); color: var(--ink); }
+  body { font: 16px/1.6 'Open Sans', Verdana, system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  header { background: #fff; border-bottom: 4px solid var(--gul); }
+  .topp { max-width: 640px; margin: 0 auto; padding: 14px 20px; display: flex; align-items: center; gap: 10px; }
+  .topp svg { width: 34px; height: 20px; }
+  .topp b { font-size: 17px; color: var(--marke); }
+  .topp span { color: var(--muted); font-size: 14px; margin-left: auto; }
+  main { max-width: 640px; margin: 28px auto 60px; padding: 0 16px; }
+  .framsteg { display: flex; gap: 8px; margin: 0 4px 14px; }
+  .framsteg div { flex: 1; font-size: 13px; color: var(--muted); }
+  .framsteg div::before { content: ''; display: block; height: 5px; border-radius: 3px; background: var(--line); margin-bottom: 6px; }
+  .framsteg .gjort::before { background: var(--brand); }
+  .framsteg .nu { color: var(--ink); font-weight: 600; }
+  .framsteg .nu::before { background: var(--gul); }
+  .kort { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 32px; }
+  @media (max-width: 520px) { .kort { padding: 22px 18px; } }
+  h1 { font-size: 25px; line-height: 1.25; margin: 0 0 10px; color: var(--marke); }
+  p { margin: 0 0 14px; }
+  .mjuk { color: var(--soft); }
+  .liten { font-size: 14px; color: var(--muted); }
+  .oga { display: block; width: 84px; height: 48px; margin: 0 0 18px; }
+  .knapp { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: var(--brand); color: #fff; border: 0; border-radius: 6px; padding: 13px 22px; font: inherit; font-weight: 600; cursor: pointer; text-decoration: none; }
+  .knapp:hover { background: var(--brand-deep); }
+  .knapp:disabled { opacity: .55; cursor: default; }
+  .knapp.stor { width: 100%; padding: 15px; font-size: 17px; }
+  .knapp.sekundar { background: #fff; color: var(--brand); border: 1px solid var(--brand); }
+  .knapp.sekundar:hover { background: var(--brand-soft); }
+  .lank { background: none; border: 0; padding: 0; color: var(--brand); text-decoration: underline; text-underline-offset: 2px; font: inherit; cursor: pointer; }
+  .hoppa { display: block; margin: 18px auto 0; font-size: 14px; color: var(--muted); }
+  label { display: block; font-weight: 600; margin: 18px 0 6px; }
+  input[type=email], input[type=password], input[type=text], input[type=number] { width: 100%; padding: 13px 14px; border: 1px solid var(--line-strong); border-radius: 6px; font: inherit; background: #fff; }
+  input:focus, .knapp:focus-visible, .lank:focus-visible { outline: 3px solid var(--gul); outline-offset: 2px; }
+  .rad { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+  ol.steg { list-style: none; counter-reset: s; padding: 0; margin: 18px 0; }
+  ol.steg li { counter-increment: s; position: relative; padding: 4px 0 12px 44px; }
+  ol.steg li::before { content: counter(s); position: absolute; left: 0; top: 0; width: 30px; height: 30px; border-radius: 50%; background: var(--brand-soft); color: var(--brand-deep); font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .ruta { border-radius: 6px; padding: 13px 15px; margin: 16px 0; font-size: 15px; }
+  .ruta.fel { background: var(--err-soft); color: var(--err); }
+  .ruta.varning { background: var(--gul-soft); color: var(--gul-deep); }
+  .ruta.info { background: var(--brand-soft); color: var(--brand-deep); }
+  .bock { display: flex; align-items: center; gap: 8px; color: var(--ok); font-weight: 600; margin: 0 0 18px; }
+  .bock::before { content: '✓'; display: inline-flex; width: 22px; height: 22px; border-radius: 50%; background: var(--ok); color: #fff; font-size: 13px; align-items: center; justify-content: center; }
+  .klar-ikon { width: 64px; height: 64px; border-radius: 50%; background: var(--ok); color: #fff; font-size: 34px; display: flex; align-items: center; justify-content: center; margin: 0 0 18px; }
+  .val { display: block; border: 2px solid var(--line); border-radius: 8px; padding: 14px 16px 14px 46px; margin: 10px 0; cursor: pointer; position: relative; font-weight: 400; }
+  .val input { position: absolute; left: 16px; top: 18px; width: 18px; height: 18px; accent-color: var(--brand); }
+  .val b { display: block; }
+  .val:has(input:checked) { border-color: var(--brand); background: var(--brand-soft); }
+  .exempel { background: var(--paper); border-left: 4px solid var(--gul); padding: 14px 16px; border-radius: 4px; font-size: 17px; margin: 10px 0; }
+  .kod { font: 700 32px/1.2 ui-monospace, Menlo, Consolas, monospace; letter-spacing: 4px; background: var(--paper); border-radius: 6px; padding: 14px; text-align: center; margin: 12px 0; }
+  details { margin-top: 18px; }
+  summary { cursor: pointer; color: var(--soft); font-size: 14px; }
+  .spinner { width: 18px; height: 18px; border: 3px solid rgba(255,255,255,.45); border-top-color: #fff; border-radius: 50%; animation: snurr .8s linear infinite; }
+  @keyframes snurr { to { transform: rotate(360deg); } }
+  .dold { display: none !important; }
+  ul.lista { padding-left: 0; list-style: none; margin: 16px 0; }
+  ul.lista li { padding: 6px 0 6px 30px; position: relative; }
+  ul.lista li::before { content: '✓'; position: absolute; left: 0; color: var(--ok); font-weight: 700; }
+</style>
+</head>
+<body>
+<header>
+  <div class="topp">
+    <svg viewBox="0 0 28 16" aria-hidden="true"><g fill="#223161"><circle cx="2" cy="8" r="2.1"/><circle cx="7.5" cy="3.6" r="2.1"/><circle cx="14" cy="2" r="2.1"/><circle cx="20.5" cy="3.6" r="2.1"/><circle cx="26" cy="8" r="2.1"/><circle cx="7.5" cy="12.4" r="2.1"/><circle cx="14" cy="14" r="2.1"/><circle cx="20.5" cy="12.4" r="2.1"/></g><circle cx="14" cy="8" r="3.4" fill="#ebcf4b"/></svg>
+    <b>Heimdall</b>
+    <span>Näringslivscentralen</span>
+  </div>
+</header>
+<main>
+  <div class="framsteg" id="framsteg" aria-hidden="true"></div>
+  <div class="kort" id="kort" aria-live="polite"><p class="mjuk">Laddar …</p></div>
+</main>
+<script>
+(function () {
+  'use strict'
+  var NYCKEL = document.querySelector('meta[name=guide]').content
+  // Ett fel från inloggningen visas en gång; adressen behåller bara nyckeln, så att sidan tål att laddas om.
+  var FEL = new URLSearchParams(location.search).get('fel')
+  try { history.replaceState(null, '', '/?t=' + encodeURIComponent(NYCKEL)) } catch (e) {}
+  var kort = document.getElementById('kort')
+  var framsteg = document.getElementById('framsteg')
+  var läge = null
+  var tjänst = null
+  var adress = ''
+  var mappar = null
+
+  /** Bygger ett element. Text sätts alltid som text, aldrig som HTML. */
+  function h(tagg, attr) {
+    var el = document.createElement(tagg)
+    for (var k in (attr || {})) {
+      var v = attr[k]
+      if (v == null || v === false) continue
+      if (k === 'text') el.textContent = v
+      else if (k.slice(0, 2) === 'on') el.addEventListener(k.slice(2), v)
+      else if (k === 'class') el.className = v
+      else el.setAttribute(k, v === true ? '' : v)
+    }
+    for (var i = 2; i < arguments.length; i++) {
+      var barn = arguments[i]
+      if (barn == null || barn === false) continue
+      ;[].concat(barn).forEach(function (b) { if (b != null && b !== false) el.appendChild(typeof b === 'string' ? document.createTextNode(b) : b) })
+    }
+    return el
+  }
+
+  function api(väg, kropp) {
+    return fetch('/api/' + väg, {
+      method: kropp ? 'POST' : 'GET',
+      headers: { 'x-guide': NYCKEL, 'content-type': 'application/json' },
+      body: kropp ? JSON.stringify(kropp) : undefined,
+    }).then(function (r) {
+      return r.json().catch(function () { return {} }).then(function (d) {
+        if (!r.ok) { var e = new Error(d.fel || 'Något gick fel. Försök igen.'); e.tips = d.tips; throw e }
+        return d
+      })
+    })
+  }
+
+  function visa(steg, innehåll) {
+    var namn = ['Logga in', 'Din e-post', 'Klart']
+    var index = { start: 0, epost: 1, korg: 1, microsoft: 1, svar: 1, klar: 2 }[steg]
+    framsteg.replaceChildren.apply(framsteg, namn.map(function (n, i) {
+      return h('div', { class: i < index || steg === 'klar' ? 'gjort' : i === index ? 'nu' : '' }, n)
+    }))
+    kort.replaceChildren.apply(kort, [].concat(innehåll).filter(function (x) { return x != null && x !== false }))
+    var fokus = kort.querySelector('[autofocus]') || kort.querySelector('h1')
+    if (fokus) {
+      if (fokus.tagName === 'H1') fokus.setAttribute('tabindex', '-1')
+      fokus.focus()
+    }
+  }
+
+  function felruta(e) {
+    return h('div', { class: 'ruta fel', role: 'alert' }, e.message, e.tips ? h('div', { style: 'margin-top:6px' }, e.tips) : null)
+  }
+
+  function upptagen(knapp, text) {
+    knapp.disabled = true
+    knapp.dataset.text = knapp.textContent
+    knapp.replaceChildren(h('span', { class: 'spinner', 'aria-hidden': 'true' }), text)
+  }
+  function ledig(knapp) {
+    knapp.disabled = false
+    knapp.textContent = knapp.dataset.text
+  }
+
+  var öga = function () {
+    var ns = 'http://www.w3.org/2000/svg'
+    var svg = document.createElementNS(ns, 'svg')
+    svg.setAttribute('viewBox', '0 0 28 16')
+    svg.setAttribute('class', 'oga')
+    svg.setAttribute('aria-hidden', 'true')
+    ;[[2, 8], [7.5, 3.6], [14, 2], [20.5, 3.6], [26, 8], [7.5, 12.4], [14, 14], [20.5, 12.4]].forEach(function (p) {
+      var c = document.createElementNS(ns, 'circle'); c.setAttribute('cx', p[0]); c.setAttribute('cy', p[1]); c.setAttribute('r', 2.1); c.setAttribute('fill', '#223161'); svg.appendChild(c)
+    })
+    var pupill = document.createElementNS(ns, 'circle'); pupill.setAttribute('cx', 14); pupill.setAttribute('cy', 8); pupill.setAttribute('r', 3.4); pupill.setAttribute('fill', '#ebcf4b'); svg.appendChild(pupill)
+    return svg
+  }
+
+  // --- 1. Logga in -----------------------------------------------------------
+  function start(fel) {
+    var knapp = h('button', { class: 'knapp stor', autofocus: true, onclick: function () {
+      upptagen(knapp, 'Öppnar inloggningen …')
+      api('logga-in', {}).then(function (d) { location.href = d.url }, function (e) { ledig(knapp); visaFel(e) })
+    } }, 'Logga in med Näringslivscentralen')
+    var felplats = h('div')
+    function visaFel(e) { felplats.replaceChildren(felruta(e)) }
+    if (fel === 'nekad') visaFel(new Error('Du nekade kopplingen. Logga in igen om du vill fortsätta.'))
+    if (fel === 'inloggning') visaFel(new Error('Inloggningen blev inte klar. Försök igen.'))
+    visa('start', [
+      öga(),
+      h('h1', { text: 'Koppla Heimdall till Claude' }),
+      h('p', { class: 'mjuk' }, 'Det tar ett par minuter. Sedan kan du be Claude skriva mejl till företagen i dina prospektlistor – och listan håller sig uppdaterad när du skickar dem.'),
+      h('ol', { class: 'steg' },
+        h('li', null, h('b', null, 'Logga in'), ' med ditt konto på Näringslivscentralen och välj ditt företag.'),
+        h('li', null, h('b', null, 'Koppla din e-post'), ' så att mejlen hamnar bland dina vanliga utkast.'),
+        h('li', null, h('b', null, 'Klart'), ' – gå tillbaka till Claude.')),
+      felplats,
+      knapp,
+      h('p', { class: 'liten', style: 'margin-top:14px' }, 'Claude får aldrig dina lösenord eller mottagarnas adresser, och inga mejl skickas utan att du själv skickar dem.'),
+    ])
+  }
+
+  // --- 2. Din e-postadress ----------------------------------------------------
+  function epost() {
+    var fält = h('input', { type: 'email', id: 'adress', autocomplete: 'email', placeholder: 'namn@foretaget.se', autofocus: true, value: adress || (läge.korg.adress || läge.konto.epost || '') })
+    var felplats = h('div')
+    var knapp = h('button', { class: 'knapp stor', type: 'submit' }, 'Fortsätt')
+    var form = h('form', { onsubmit: function (ev) {
+      ev.preventDefault()
+      adress = fält.value.trim()
+      upptagen(knapp, 'Känner igen din e-post …')
+      api('identifiera', { adress: adress }).then(function (d) { tjänst = d; korg() }, function (e) { ledig(knapp); felplats.replaceChildren(felruta(e)) })
+    } },
+      h('label', { for: 'adress' }, 'Din e-postadress'), fält, felplats, h('div', { class: 'rad' }, knapp))
+    visa('epost', [
+      h('p', { class: 'bock' }, 'Inloggad som ' + läge.konto.namn + ' · ' + läge.konto.foretag),
+      h('h1', { text: 'Vilken e-post skickar du från?' }),
+      h('p', { class: 'mjuk' }, 'Mejlen Claude skriver hamnar som utkast i den korgen, så att du kan läsa dem och skicka själv. Vi känner igen vilken e-posttjänst du har.'),
+      form,
+      hoppaÖver(),
+    ])
+  }
+
+  function hoppaÖver() {
+    return h('button', { class: 'lank hoppa', type: 'button', onclick: function () {
+      api('hoppa-over', {}).then(function () { mappar = null; klar(true) })
+    } }, 'Hoppa över – jag öppnar mejlen från Heimdalls utkastlåda i stället')
+  }
+
+  // --- 3. Koppla korgen --------------------------------------------------------
+  function korg() {
+    if (tjänst.auth === 'microsoft') return microsoft()
+    var felplats = h('div')
+    var lösen = h('input', { type: 'password', id: 'losen', autocomplete: 'off', autofocus: true, spellcheck: 'false' })
+    var användare = h('input', { type: 'text', id: 'anv', value: adress, autocomplete: 'off' })
+    var server = h('input', { type: 'text', id: 'server', value: tjänst.forval === 'annan' ? tjänst.gissadServer : tjänst.host })
+    var port = h('input', { type: 'number', id: 'port', value: String(tjänst.port) })
+    var knapp = h('button', { class: 'knapp stor', type: 'submit' }, 'Koppla ' + tjänst.namn)
+    var bridgeRuta = null
+    if (tjänst.bridge && !tjänst.bridgeIgang) {
+      var kontroll = h('button', { class: 'knapp sekundar', type: 'button', onclick: function () {
+        upptagen(kontroll, 'Letar …')
+        api('bridge').then(function (d) {
+          ledig(kontroll)
+          if (d.igang) { tjänst.bridgeIgang = true; korg() } else kontroll.textContent = 'Hittar den inte än – försök igen'
+        })
+      } }, 'Jag har startat Bridge')
+      bridgeRuta = h('div', { class: 'ruta varning' },
+        h('b', null, 'Proton Mail Bridge är inte igång.'), ' Starta programmet Proton Mail Bridge på datorn och klicka sedan här.',
+        h('div', { class: 'rad' }, kontroll))
+    }
+    var form = h('form', { onsubmit: function (ev) {
+      ev.preventDefault()
+      felplats.replaceChildren()
+      upptagen(knapp, 'Provar anslutningen …')
+      api('korg', { adress: adress, losenord: lösen.value, forval: tjänst.forval, anvandare: användare.value, host: server.value, port: Number(port.value) })
+        .then(function (d) { mappar = d.mappar; svar() }, function (e) { ledig(knapp); felplats.replaceChildren(felruta(e)) })
+    } },
+      h('ol', { class: 'steg' }, tjänst.steg.map(function (s) { return h('li', null, s) })),
+      tjänst.knapp ? h('p', null, h('a', { class: 'knapp sekundar', href: tjänst.knapp.href, target: '_blank', rel: 'noopener noreferrer' }, tjänst.knapp.text + ' ↗')) : null,
+      h('label', { for: 'losen' }, tjänst.losenordEtikett), lösen,
+      tjänst.obs ? h('div', { class: 'ruta info' }, tjänst.obs) : null,
+      tjänst.lankar.map(function (l) { return h('p', { class: 'liten' }, h('a', { href: l.href, target: '_blank', rel: 'noopener noreferrer' }, l.text + ' ↗')) }),
+      felplats,
+      h('div', { class: 'rad' }, knapp),
+      h('details', null, h('summary', null, 'Avancerat'),
+        h('label', { for: 'anv' }, tjänst.bridge ? 'Bridges användarnamn' : 'Användarnamn'), användare,
+        h('label', { for: 'server' }, 'IMAP-server'), server,
+        h('label', { for: 'port' }, 'Port'), port))
+    visa('korg', [
+      h('h1', { text: 'Koppla ' + tjänst.namn }),
+      h('p', { class: 'mjuk' }, adress, ' · ', h('button', { class: 'lank', type: 'button', onclick: epost }, 'ändra')),
+      bridgeRuta,
+      form,
+      hoppaÖver(),
+    ])
+  }
+
+  function microsoft() {
+    var felplats = h('div')
+    if (!tjänst.microsoftKlart) {
+      return visa('microsoft', [
+        h('h1', { text: 'Outlook och Microsoft 365' }),
+        h('p', { class: 'mjuk' }, adress),
+        h('div', { class: 'ruta info' }, 'Att koppla Outlook direkt kommer snart. Tills dess hamnar mejlen i Heimdalls utkastlåda, där du öppnar dem i Outlook med ett klick – och listan uppdateras ändå när du skickar.'),
+        h('div', { class: 'rad' }, h('button', { class: 'knapp stor', autofocus: true, onclick: function () { api('hoppa-over', {}).then(function () { klar(true) }) } }, 'Fortsätt med utkastlådan')),
+        h('p', { style: 'margin-top:14px' }, h('button', { class: 'lank', type: 'button', onclick: epost }, 'Använd en annan e-postadress')),
+      ])
+    }
+    var knapp = h('button', { class: 'knapp stor', autofocus: true, onclick: function () {
+      upptagen(knapp, 'Startar …')
+      api('microsoft', { adress: adress }).then(function (d) {
+        var kodruta = h('div', { class: 'kod' }, d.kod)
+        visa('microsoft', [
+          h('h1', { text: 'Logga in hos Microsoft' }),
+          h('ol', { class: 'steg' }, h('li', null, 'Klicka på knappen – Microsofts sida öppnas.'), h('li', null, 'Skriv in koden och logga in med ditt vanliga konto.'), h('li', null, 'Kom tillbaka hit – sidan går vidare av sig själv.')),
+          kodruta,
+          h('div', { class: 'rad' },
+            h('a', { class: 'knapp', href: d.adress, target: '_blank', rel: 'noopener noreferrer' }, 'Öppna Microsofts sida ↗'),
+            h('button', { class: 'knapp sekundar', type: 'button', onclick: function () { navigator.clipboard && navigator.clipboard.writeText(d.kod) } }, 'Kopiera koden')),
+          felplats,
+        ])
+        var poll = setInterval(function () {
+          api('microsoft').then(function (s) {
+            if (s.status === 'klar') { clearInterval(poll); mappar = null; svar() }
+            if (s.status === 'fel') { clearInterval(poll); felplats.replaceChildren(felruta(new Error(s.fel))) }
+          })
+        }, 3000)
+      }, function (e) { ledig(knapp); felplats.replaceChildren(felruta(e)) })
+    } }, 'Logga in med Microsoft')
+    visa('microsoft', [
+      h('h1', { text: 'Koppla Outlook' }),
+      h('p', { class: 'mjuk' }, adress, ' · ', h('button', { class: 'lank', type: 'button', onclick: epost }, 'ändra')),
+      h('ol', { class: 'steg' }, tjänst.steg.map(function (s) { return h('li', null, s) })),
+      tjänst.obs ? h('div', { class: 'ruta info' }, tjänst.obs) : null,
+      felplats,
+      knapp,
+      hoppaÖver(),
+    ])
+  }
+
+  // --- 4. Svaren ---------------------------------------------------------------
+  function svar() {
+    var nej = h('input', { type: 'radio', name: 'svar', value: 'nej', checked: !läge.lasSvar })
+    var ja = h('input', { type: 'radio', name: 'svar', value: 'ja', checked: läge.lasSvar })
+    var knapp = h('button', { class: 'knapp stor', autofocus: true, onclick: function () {
+      upptagen(knapp, 'Sparar …')
+      api('svar', { lasSvar: ja.checked }).then(function () { klar(false) })
+    } }, 'Fortsätt')
+    visa('svar', [
+      h('p', { class: 'bock' }, (tjänst ? tjänst.namn : 'Din e-post') + ' är kopplad' + (mappar && mappar.utkast ? ' – utkasten hamnar i "' + mappar.utkast + '"' : '')),
+      h('h1', { text: 'Får Claude läsa svaren?' }),
+      h('p', { class: 'mjuk' }, 'När ett företag svarar ser Heimdall det och markerar raden i listan. Vill du kan Claude också läsa svaret och föreslå vad nästa steg är.'),
+      h('label', { class: 'val' }, nej, h('b', null, 'Nej, jag läser svaren själv'), h('span', { class: 'mjuk' }, 'Claude ser bara att det kommit ett svar. Rekommenderas.')),
+      h('label', { class: 'val' }, ja, h('b', null, 'Ja, Claude får läsa svaren'), h('span', { class: 'mjuk' }, 'Svaren skickas då till Claude, så att den kan sammanfatta dem.')),
+      h('div', { class: 'rad' }, knapp),
+    ])
+  }
+
+  // --- 5. Klart ----------------------------------------------------------------
+  function klar(hoppad) {
+    var exempel = h('div', { class: 'exempel' }, 'Skriv mejl till 10 företag i min prospektlista som inte kontaktats än')
+    var kopiera = h('button', { class: 'knapp sekundar', type: 'button', onclick: function () {
+      navigator.clipboard && navigator.clipboard.writeText(exempel.textContent).then(function () { kopiera.textContent = 'Kopierat' })
+    } }, 'Kopiera')
+    api('lage').then(function (l) { läge = l })
+    api('listor').then(function (d) {
+      if (d.listor && d.listor.length) exempel.textContent = 'Skriv mejl till 10 företag i ' + d.listor[0] + '-listan som inte kontaktats än'
+    })
+    api('klar', {})
+    visa('klar', [
+      h('div', { class: 'klar-ikon', 'aria-hidden': 'true' }, '✓'),
+      h('h1', { text: 'Klart!' }),
+      h('ul', { class: 'lista' },
+        h('li', null, 'Inloggad som ' + läge.konto.namn + ' för ' + läge.konto.foretag),
+        h('li', null, hoppad
+          ? 'Mejlen hamnar i Heimdalls utkastlåda på naringslivscentralen.se'
+          : 'Mejlen hamnar bland utkasten i ' + (adress || läge.korg.adress || 'din e-post'))),
+      h('p', null, h('b', null, 'Gå tillbaka till Claude'), ' och skriv till exempel:'),
+      exempel,
+      h('div', { class: 'rad' }, kopiera),
+      h('p', { class: 'liten', style: 'margin-top:22px' }, 'Du kan stänga den här fliken. Vill du ändra något senare – be Claude öppna Heimdalls guide.'),
+      h('button', { class: 'lank', type: 'button', onclick: epost }, hoppad ? 'Koppla din e-post ändå' : 'Byt e-post'),
+    ])
+  }
+
+  // --- Var är vi? ---------------------------------------------------------------
+  api('lage').then(function (l) {
+    läge = l
+    if (!l.inloggad) return start(FEL)
+    if (!l.korg.kopplad && !l.korg.hoppad) return epost()
+    klar(l.korg.hoppad && !l.korg.kopplad)
+  }, function () {
+    kort.replaceChildren(h('div', { class: 'ruta fel' }, 'Guiden svarar inte. Öppna den igen från Claude.'))
+  })
+})()
+</script>
+</body>
+</html>

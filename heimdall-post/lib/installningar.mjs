@@ -31,32 +31,34 @@ function skriv(namn, data) {
 }
 
 /**
- * Inställningarna, med miljövariablerna från Claude Desktops formulär (MCPB)
- * ovanpå filen. Där finns inget att köra setup i, så formuläret räcker.
+ * Inställningarna. HEIMDALL_URL pekar ut en annan Heimdall – en
+ * utvecklingsserver – och har då egna inloggningar i nyckelringen.
  */
 export function läsInstallningar() {
   const fil = läs('config.json', {})
-  const env = process.env
-  const imap = { ...(fil.imap ?? {}) }
-  if (env.HEIMDALL_POST_FORVAL) imap.forval = env.HEIMDALL_POST_FORVAL
-  if (env.HEIMDALL_POST_IMAP_HOST) imap.host = env.HEIMDALL_POST_IMAP_HOST
-  if (env.HEIMDALL_POST_IMAP_PORT) imap.port = Number(env.HEIMDALL_POST_IMAP_PORT)
-  if (env.HEIMDALL_POST_IMAP_USER) imap.anvandare = env.HEIMDALL_POST_IMAP_USER
-  if (env.HEIMDALL_POST_FRAN) imap.fran = env.HEIMDALL_POST_FRAN
-  if (env.HEIMDALL_POST_BRIDGE_CERT) imap.bridgeCert = env.HEIMDALL_POST_BRIDGE_CERT
   return {
-    issuer: env.HEIMDALL_URL || fil.issuer || 'https://naringslivscentralen.se',
-    imap,
-    lasSvar: env.HEIMDALL_POST_LAS_SVAR ? env.HEIMDALL_POST_LAS_SVAR === 'true' : Boolean(fil.lasSvar),
+    issuer: (process.env.HEIMDALL_URL || fil.issuer || 'https://naringslivscentralen.se').replace(/\/$/, ''),
+    imap: { ...(fil.imap ?? {}) },
+    lasSvar: Boolean(fil.lasSvar),
+    korgHoppad: Boolean(fil.korgHoppad),
   }
 }
 
 export function sparaInstallningar(inst) {
-  skriv('config.json', { issuer: inst.issuer, imap: inst.imap, lasSvar: Boolean(inst.lasSvar) })
+  skriv('config.json', {
+    issuer: inst.issuer,
+    imap: inst.imap,
+    lasSvar: Boolean(inst.lasSvar),
+    korgHoppad: Boolean(inst.korgHoppad),
+  })
+}
+
+export function korgKopplad(inst = läsInstallningar()) {
+  return Boolean(inst.imap?.anvandare && (inst.imap.host || inst.imap.forval))
 }
 
 export function läsLage() {
-  return läs('state.json', { vattenmarken: {}, senastSynk: null })
+  return läs('state.json', { vattenmarken: {}, senastSynk: null, guideOppnad: null })
 }
 
 export function sparaLage(läge) {
