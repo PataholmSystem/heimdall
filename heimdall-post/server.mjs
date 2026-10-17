@@ -10,6 +10,7 @@ import { korgKopplad, läsInstallningar, läsLage, sparaLage } from './lib/insta
 import { hash, index, kastade, loggkod, skickat, studs, svar, ärStuds } from './lib/match.mjs'
 import { adresser, byggUtkast, doman, egenText, svarstext } from './lib/mejl.mjs'
 import { öppna } from './lib/oppna.mjs'
+import { rapportera } from './lib/status.mjs'
 import { flytta, nyckel, vadSkaLäsas } from './lib/vattenmarke.mjs'
 
 /**
@@ -199,6 +200,7 @@ async function synka({ since }) {
   }
   läge = { ...läge, senastSynk: new Date().toISOString() }
   sparaLage(läge)
+  rapportera()
   return { ...summa, foretag: företag, text: `Synkat: ${summa.skickade} skickade, ${summa.svar} svar, ${summa.studsar} studsar, ${summa.kastade} kastade utkast.` }
 }
 
@@ -414,6 +416,7 @@ export async function startaServer() {
   await byggServer()
   await server.connect(new StdioServerTransport())
   log('igång')
+  rapportera()
   // Första gången efter installationen: öppna guiden direkt.
   const inst = läsInstallningar()
   if (!inloggad() || (!korgKopplad(inst) && !inst.korgHoppad)) {

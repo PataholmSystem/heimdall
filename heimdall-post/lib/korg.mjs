@@ -76,6 +76,6 @@ export async function kopplaKorg({ adress, losenord, forval, anvandare, host, po
     throw vänligtFel(e, forval)
   }
   if (f.auth === 'losenord') sparaHemlighet(imapNyckel(imap.anvandare), losenord)
-  sparaInstallningar({ ...inst, imap })
+  sparaInstallningar({ ...inst, imap: { ...imap, utkastMapp: hittade.utkast ?? null } })
   return hittade
 }

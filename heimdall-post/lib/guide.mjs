@@ -5,6 +5,7 @@ import { FORVAL } from './forval.mjs'
 import { anropa, inloggad, mcpAnrop, påbörjaWebbinloggning } from './heimdall.mjs'
 import { korgKopplad, läsInstallningar, sparaInstallningar } from './installningar.mjs'
 import { KorgFel, kopplaKorg } from './korg.mjs'
+import { rapportera } from './status.mjs'
 import { klientId, påbörjaMicrosoft } from './microsoft.mjs'
 import { anslut, mappar } from './imap.mjs'
 import { bridgeIgång, identifiera } from './upptack.mjs'
@@ -132,6 +133,7 @@ export async function startaGuide({ vidInloggning, vidKlar } = {}) {
       try {
         await väntande.avsluta(url.searchParams.get('code'))
         väntande = null
+        rapportera()
         vidInloggning?.()
         res.writeHead(302, { ...SÄKERHET, Location: sidAdress() })
       } catch {
@@ -203,6 +205,7 @@ export async function startaGuide({ vidInloggning, vidKlar } = {}) {
         sparaInstallningar({ ...inst, korgHoppad: false })
         // Adressen är bevisad – hjälparen har just loggat in i den korgen.
         await anropa('POST', '/api/post/avsandare', { adress }).catch(() => {})
+        await rapportera()
         return json(res, 200, { ok: true, mappar: hittade })
       } catch (e) {
         if (e instanceof KorgFel) return json(res, 422, { fel: e.message, tips: e.tips })
@@ -220,10 +223,11 @@ export async function startaGuide({ vidInloggning, vidKlar } = {}) {
             const inst = läsInstallningar()
             const imap = { forval: 'microsoft', auth: 'microsoft', anvandare: adress, fran: adress, host: FORVAL.microsoft.host, port: 993, secure: true }
             const klient = await anslut({ ...inst, imap })
-            await mappar(klient)
+            const hittade = await mappar(klient)
             await klient.logout().catch(() => {})
-            sparaInstallningar({ ...inst, imap, korgHoppad: false })
+            sparaInstallningar({ ...inst, imap: { ...imap, utkastMapp: hittade.utkast ?? null }, korgHoppad: false })
             await anropa('POST', '/api/post/avsandare', { adress }).catch(() => {})
+            await rapportera()
             microsoft = { status: 'klar', fel: null }
           } catch {
             microsoft = { status: 'fel', fel: 'Inloggningen gick, men korgen gick inte att öppna. Har IT-avdelningen stängt av IMAP?' }
@@ -237,11 +241,13 @@ export async function startaGuide({ vidInloggning, vidKlar } = {}) {
 
     if (väg === 'hoppa-over') {
       sparaInstallningar({ ...läsInstallningar(), korgHoppad: true })
+      await rapportera()
       return json(res, 200, { ok: true })
     }
 
     if (väg === 'svar') {
       sparaInstallningar({ ...läsInstallningar(), lasSvar: kropp.lasSvar === true })
+      await rapportera()
       return json(res, 200, { ok: true })
     }
 
