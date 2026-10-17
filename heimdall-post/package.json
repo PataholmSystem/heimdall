@@ -31,7 +31,7 @@
     "proton",
     "prospektering"
   ],
-  "homepage": "https://naringslivscentralen.se/konto/ai",
+  "homepage": "https://naringslivscentralen.se/konto/mcp",
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.1",

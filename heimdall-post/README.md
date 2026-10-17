@@ -13,7 +13,7 @@ skickar själv – och listan uppdateras när du skickar.
 
 ## Installera
 
-1. Ladda ner **Heimdall.mcpb** från naringslivscentralen.se/konto/ai (eller
+1. Ladda ner **Heimdall.mcpb** från naringslivscentralen.se/konto/mcp (eller
    [senaste releasen](https://github.com/PataholmSystem/heimdall/releases/latest)).
 2. Dubbelklicka på filen. Claude-appen öppnas – klicka **Installera**.
 3. En guide öppnas i webbläsaren: logga in med ditt konto på Näringslivscentralen,

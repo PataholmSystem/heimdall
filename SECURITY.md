@@ -11,7 +11,7 @@ Vi svarar inom tre arbetsdagar.
   eller loggar. I Claude Desktop förvarar Desktop lösenordet från formuläret.
 - **Inloggningen mot Heimdall** sker på naringslivscentralen.se (OAuth med PKCE,
   svaret till en port på den egna datorn). Token gäller Heimdalls MCP-server och
-  `/api/post`, och kan dras in under naringslivscentralen.se/konto/ai.
+  `/api/post`, och kan dras in under naringslivscentralen.se/konto/mcp.
 - **Guiden** lyssnar bara på 127.0.0.1, kräver en hemlig nyckel per start,
   prövar värdnamnet mot DNS-rebinding och får inte ramas in.
 - **TLS** kontrolleras alltid. Proton Bridges självsignerade certifikat hämtas

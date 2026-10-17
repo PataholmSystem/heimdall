@@ -37,4 +37,4 @@ Heimdall är Näringslivscentralens prospektverktyg. Kopplingen `heimdall` ger l
 ## När något inte fungerar
 
 - **heimdall kräver inloggning:** kör `/mcp`, välj heimdall och logga in med kontot på naringslivscentralen.se.
-- **heimdall-post saknas eller kan inte ansluta:** utkasten ligger då i Heimdalls utkastlåda på listans sida. Hjälparen installeras med `npx heimdall-post setup` – se naringslivscentralen.se/konto/ai.
+- **heimdall-post saknas eller kan inte ansluta:** utkasten ligger då på företagens rader i listan på naringslivscentralen.se – knappen "utkast väntar" i listans huvud visar dem. Vill användaren ha dem direkt i mejlkorgen: Claude-appens tillägg, under naringslivscentralen.se/konto/mcp.
