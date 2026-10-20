@@ -1,6 +1,6 @@
 {
   "name": "heimdall-post",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "Heimdall för Claude: skriv mejl till företagen i dina prospektlistor på Näringslivscentralen och håll listan uppdaterad. En guide i webbläsaren kopplar din e-post – Proton, Gmail, iCloud, Outlook eller annan. Skickar aldrig mejl.",
   "type": "module",
   "bin": {
