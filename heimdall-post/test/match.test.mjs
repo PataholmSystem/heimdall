@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { AUTOMATISKA_AVSANDARE, automatisk, hash, index, kastade, loggkod, lär, skickat, studs, svar, ärStuds } from '../lib/match.mjs'
+import { AUTOMATISKA_AVSANDARE, automatisk, hash, index, kastade, loggkod, lär, misslyckade, skickat, studs, svar, ärStuds } from '../lib/match.mjs'
 
 const salt = 'saltkod'
 const sedan = '2026-10-01T00:00:00.000Z'
@@ -183,6 +183,58 @@ describe('studsar', () => {
     const m = { from: adr('MAILER-DAEMON@mx.hotell.se'), amne: 'Undelivered Mail', datum }
     expect(ärStuds(m)).toBe(true)
     expect(studs(m, 'Original-Message-ID: <h-abc@naringslivscentralen.se>', ix)).toMatchObject({ originalMessageId: '<h-abc@naringslivscentralen.se>' })
+  })
+
+  // Så som Proton skickar den: rapporten, och originalet med Message-ID.
+  const rapport = (mottagare, action = 'failed') =>
+    [
+      'This is the mail system at Proton Mail.',
+      '',
+      `<${mottagare}>: Host or domain name not found.`,
+      '',
+      'Reporting-MTA: dns; mail-244104.protonmail.ch',
+      'Arrival-Date: Tue, 20 Oct 2026 06:12:08 +0000 (UTC)',
+      '',
+      `Final-Recipient: rfc822; ${mottagare}`,
+      `Original-Recipient: rfc822;${mottagare}`,
+      `Action: ${action}`,
+      'Status: 5.4.4',
+      'Diagnostic-Code: X-Postfix; Host or domain name not found. Name service error',
+      '    for name=in.naringslivscentralen.se type=A: Host not found',
+      '',
+      'Return-Path: <saljare@foretag.se>',
+      'To: info@hotell.se',
+      'Bcc: logg-abcdefgh2345@in.naringslivscentralen.se',
+      'Message-ID: <h-abc@naringslivscentralen.se>',
+    ].join('\r\n')
+  const m = { from: adr('MAILER-DAEMON@proton.me'), amne: 'Undelivered Mail Returned to Sender', datum }
+
+  it('en studs på loggadressen i Bcc är ingen studs från prospektet', () => {
+    expect(studs(m, rapport('logg-abcdefgh2345@in.naringslivscentralen.se'), ix)).toBeNull()
+  })
+
+  it('en studs från prospektet säger vilken adress som inte gick fram', () => {
+    expect(studs(m, rapport('Info@Hotell.se'), ix)).toEqual({
+      typ: 'studs',
+      datum,
+      originalMessageId: '<h-abc@naringslivscentralen.se>',
+      till: hash(salt, 'info@hotell.se'),
+    })
+  })
+
+  it('en försening, en egen adress eller en okänd mottagare är ingen studs', () => {
+    expect(studs(m, rapport('info@hotell.se', 'delayed'), ix)).toBeNull()
+    expect(studs(m, rapport('saljare@foretag.se'), ix, new Set(['saljare@foretag.se']))).toBeNull()
+    expect(studs(m, rapport('nagon@annan.se'), ix)).toBeNull()
+  })
+
+  it('flera mottagare: bara de som misslyckades räknas', () => {
+    const två = rapport('info@hotell.se', 'delivered').replace(
+      'Final-Recipient',
+      'Final-Recipient: rfc822; logg-abcdefgh2345@in.naringslivscentralen.se\r\nAction: failed\r\n\r\nFinal-Recipient',
+    )
+    expect(misslyckade(två)).toEqual(['logg-abcdefgh2345@in.naringslivscentralen.se'])
+    expect(studs(m, två, ix)).toBeNull()
   })
 })
 

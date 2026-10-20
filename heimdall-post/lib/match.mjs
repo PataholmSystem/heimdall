@@ -188,13 +188,42 @@ export function ärStuds(m) {
   return SYSTEMAVSANDARE.test(fran) || /^(undeliverable|undelivered|delivery status notification|olevererbart|returned mail)/i.test(m.amne ?? '')
 }
 
-/** En studs: vilket av våra mejl kom tillbaka? Letar efter kända Message-ID i källtexten. */
-export function studs(m, källa, ix) {
+/**
+ * Mottagarna som inte gick fram, ur studsens leveransrapport (RFC 3464):
+ * Final-Recipient, eller Original-Recipient, i varje block med Action: failed.
+ * Null när studsen saknar en läsbar rapport.
+ */
+export function misslyckade(källa) {
+  const text = String(källa ?? '').replace(/\r\n/g, '\n')
+  if (!/^(final|original)-recipient:/im.test(text)) return null
+  const ut = new Set()
+  for (const block of text.split(/\n[ \t]*\n/)) {
+    if (!/^action:\s*failed\b/im.test(block)) continue
+    const a = /^(?:final|original)-recipient:\s*[a-z0-9-]+\s*;\s*<?([^\s<>;]+@[^\s<>;]+?)>?\s*$/im.exec(block)
+    if (a) ut.add(a[1].toLowerCase())
+  }
+  return [...ut]
+}
+
+/**
+ * En studs: vilket av våra mejl kom tillbaka, och till vem? Originalet känns
+ * igen på ett känt Message-ID i källtexten. Har studsen en leveransrapport ska
+ * mottagaren som inte gick fram vara en adress på raden – loggadressen i Bcc
+ * och användarens egna adresser är aldrig prospektets, och en rapport utan
+ * "failed" är en försening. Utan rapport följer bara originalet med.
+ */
+export function studs(m, källa, ix, egna = new Set()) {
   if (tidFör(m, ix) === null) return null
   const text = String(källa ?? '')
   const original = [...ix.kandaId].find((id) => text.includes(id))
   if (!original) return null
-  return { typ: 'studs', datum: m.datum, originalMessageId: original }
+  const fel = misslyckade(text)
+  if (!fel) return { typ: 'studs', datum: m.datum, originalMessageId: original }
+  const till = fel
+    .filter((a) => doman(a) !== ix.loggDoman && !egna.has(a))
+    .map((a) => hash(ix.salt, a))
+    .find((h) => ix.adresser.has(h))
+  return till ? { typ: 'studs', datum: m.datum, originalMessageId: original, till } : null
 }
 
 /**

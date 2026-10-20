@@ -173,7 +173,7 @@ async function synka({ since }) {
     }
     const källor = await läsKällor(klient, m.inkorg, studsUid.slice(-50))
     for (const msg of r.meddelanden.filter((x) => källor.has(x.uid))) {
-      const h = studs(msg, källor.get(msg.uid).toString('utf8'), ix)
+      const h = studs(msg, källor.get(msg.uid).toString('utf8'), ix, egna)
       if (h) händelser.push(h)
     }
     läge = flytta(läge, n, r.uidValidity, r.högstaUid)
